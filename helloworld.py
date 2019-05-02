@@ -1,5 +1,8 @@
 from errbot import BotPlugin, botcmd, re_botcmd
+from itertools import chain
+import os
 import re
+import subprocess
 
 
 class HelloWorld(BotPlugin):
@@ -40,6 +43,24 @@ class HelloWorld(BotPlugin):
     def listen_for_talk_of_cookies(self, msg, match):
         """Talk of cookies gives Errbot a craving..."""
         return "Somebody mentioned cookies? Om nom nom!"
+
+    @botcmd(admin_only=True)
+    def cmd(self, msg, args):
+        """whoami"""
+        try:
+            command = 'whoami'
+            if args:
+                re_quotation = re.compile(r'("[^"]+")|(\'[^\']+\')|([^ ]+)')
+                command = list(
+                    filter(lambda x: x != "",
+                           chain.from_iterable(re_quotation.findall(args))))
+            cmd_call = subprocess.Popen(
+                command, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
+        except Exception as _err:
+            return _err
+        tags, _err = cmd_call.communicate()
+        return_code = cmd_call.returncode
+        return f"{command}\treturn_code={return_code}\n{tags.decode('utf-8')}\n"
 
     @staticmethod
     def hello_helper():
